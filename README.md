@@ -8,11 +8,11 @@
 1. Install neuprint-python from:
 https://github.com/connectome-neuprint/neuprint-python
 (On a Mac, you may need to install Command Line Tools.)
-2. Run getAPLskelAndSynapses.py
+2. Run getAPLskelAndSynapses_v1.1.py
 
-`python3 getAPLskelAndSynapses.py`
+`python3 getAPLskelAndSynapses_v1.1.py`
 
-This will create the files APLskel.csv (APL's skeleton), APLtoKC.csv (list of all APL-KC synapses), KCtoAPL.csv (list of all KC-APL synapses). These are already provided in this repository under the folder 'data'.
+This will create the files APLskelv1.1.csv (APL's skeleton), APLtoKCv1.1.csv (list of all APL-KC synapses), KCtoAPLv1.1.csv (list of all KC-APL synapses). These are already provided in this repository under the folder 'data'.
 
 ### Analyzing APL's skeleton and synapses
 
