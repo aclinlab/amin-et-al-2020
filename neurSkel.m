@@ -263,6 +263,19 @@ classdef neurSkel
                 else
                     disp(['getting synapse locations from ',filepaths{i}]);
                     synapses = readtable(filepaths{i});
+                    % This is a hack for backward compatibility
+                    if ismember('x_pre', synapses.Properties.VariableNames)
+                        synapses.Properties.VariableNames{'x_pre'} = 'ux';
+                        synapses.Properties.VariableNames{'y_pre'} = 'uy';
+                        synapses.Properties.VariableNames{'z_pre'} = 'uz';
+                        synapses.Properties.VariableNames{'x_post'} = 'dx';
+                        synapses.Properties.VariableNames{'y_post'} = 'dy';
+                        synapses.Properties.VariableNames{'z_post'} = 'dz';
+                        synapses.Properties.VariableNames{'bodyId_pre'} = 'upstream_bodyId';
+                        synapses.Properties.VariableNames{'bodyId_post'} = 'downstream_bodyId';
+                        synapses.Properties.VariableNames{'roi_pre'} = 'upstream_roi';
+                        synapses.Properties.VariableNames{'roi_post'} = 'downstream_roi';
+                    end
                     switch options(i)
                         case 1 % if skeleton neuron is pre, we want the upstream partner
                             synOrigLocs = synapses{:,{'ux','uy','uz'}};%[synapses.ux(i) synapses.uy(i) synapses.uz(i)];
@@ -1060,14 +1073,26 @@ classdef neurSkel
             else
                 inputColor='k';
             end
-%             cmap = colormap;
+            cmap = colormap;
             synsToUse = randsample(length(obj.synSet(j).synLinks), numToDraw);
             for i=1:length(synsToUse)
                 x = .008*obj.synSet(j).synLocs(synsToUse(i),2);
                 y = .008*obj.synSet(j).synLocs(synsToUse(i),1);
                 z = -.008*obj.synSet(j).synLocs(synsToUse(i),3);
-%                 color = cmap(floor(obj.synSet(j).synROIs(synsToUse(i))*63/length(obj.synSet(j).synROIskey))+1,:);
                 scatter3(x,y,z,'o','MarkerEdgeColor',inputColor,'MarkerEdgeAlpha',0.3, 'LineWidth',0.5); % 'Color',color); %'MarkerSize',5, 
+            end
+            ROIstoHighlight = {'','SLP(R)','SCL(R)','ICL(R)','PLP(R)'}; %,'CRE(R)','SIP(R)'
+            for i=1:length(ROIstoHighlight)
+                ROIindex = find(strcmp(ROIstoHighlight(i), obj.synSet(j).synROIskey));
+                % Test the calyxHACK
+                synsInThisROI = (obj.synSet(j).synROIs==ROIindex)&(obj.synSet(j).synLocs(:,2)<(160/.008));
+                x = .008*obj.synSet(j).synLocs(synsInThisROI,2);
+                y = .008*obj.synSet(j).synLocs(synsInThisROI,1);
+                z = -.008*obj.synSet(j).synLocs(synsInThisROI,3);
+                color = cmap(floor(i*63/length(ROIstoHighlight))+1,:);
+                scatter3(x,y,z,'o','MarkerEdgeColor',color);
+                scatter3(180,180,-40-i*10,'o','MarkerEdgeColor',color);
+                text(180,180,-40-i*10,strcat('...',ROIstoHighlight(i)));
             end
             axis equal, axis tight;
             view(66,15)
@@ -1133,11 +1158,32 @@ classdef neurSkel
             % draw APL synapses
             APLtoKC = find(obj.synSet(2).uniquePartners == 425790257);
             APLtoKCsyns = find(obj.synSet(2).uniquePartnerIndices == APLtoKC);
+            % The commented out code allows you to color-code synapses by
+            % ROI
+            % This reveals that many calyx synapses are annotated as
+            % belonging to other ROIs besides CA(R)
+%             calyxIndex = find(strcmp('CA(R)', obj.synSet(2).synROIskey));
+%             cmap = colormap;
+%             ROIsdisplayed=[];
             for j=1:length(APLtoKCsyns)
-                x = 0.008*obj.synSet(2).synLocs(obj.synSet(2).synLocsOfOrigSyn(APLtoKCsyns(j)),2);
-                y = 0.008*obj.synSet(2).synLocs(obj.synSet(2).synLocsOfOrigSyn(APLtoKCsyns(j)),1);
-                z = -0.008*obj.synSet(2).synLocs(obj.synSet(2).synLocsOfOrigSyn(APLtoKCsyns(j)),3);
-                plot3(x,y,z,'o','MarkerSize',6,'MarkerEdgeColor','r','MarkerFaceColor','r');
+                thisSyn = obj.synSet(2).synLocsOfOrigSyn(APLtoKCsyns(j));
+%                 thisROI = obj.synSet(2).synROIs(thisSyn);
+%                 if ~ismember(thisROI, ROIsdisplayed)
+%                     ROIsdisplayed = [ROIsdisplayed, thisROI];
+%                 end    
+%                 color = cmap(floor(obj.synSet(2).synROIs(thisSyn)*63/length(obj.synSet(2).synROIskey))+1,:);
+                x = 0.008*obj.synSet(2).synLocs(thisSyn,2);
+                y = 0.008*obj.synSet(2).synLocs(thisSyn,1);
+                z = -0.008*obj.synSet(2).synLocs(thisSyn,3);
+%                 if ~sum(strcmp(obj.synSet(2).synROIskey(obj.synSet(2).synROIs(thisSyn)), {'CA(R)','PED(R)','a''L(R)','aL(R)','b''L(R)','bL(R)','gL(R)'}))
+%                     obj.synSet(2).synROIskey(obj.synSet(2).synROIs(thisSyn))
+%                     text(x,y,z,strcat('...', obj.synSet(2).synROIskey(obj.synSet(2).synROIs(thisSyn))));
+%                 end
+%                 if obj.synSet(2).synROIs(obj.synSet(2).synLocsOfOrigSyn(APLtoKCsyns(j)))==calyxIndex
+%                     plot3(x,y,z,'o','MarkerSize',6,'MarkerEdgeColor','g','MarkerFaceColor','g');
+%                 else
+                plot3(x,y,z,'o','MarkerSize',6,'MarkerEdgeColor','r','MarkerFaceColor','r'); %replace 'r' with color to color-code synapses
+%                 end
             end
             KCtoAPL = find(obj.synSet(1).uniquePartners == 425790257);
             KCtoAPLsyns = find(obj.synSet(1).uniquePartnerIndices == KCtoAPL);
@@ -1149,9 +1195,14 @@ classdef neurSkel
             end
             axis equal, axis tight
             view(66,15);
-            xlim([86.6361  284.7173])
-            ylim([83.5456  204.0213])
-            zlim([-182.0300  -37.4426])
+            xlim([70  290])
+            ylim([57  220])
+            zlim([-182.0300  -34.5])
+%             for i=1:length(ROIsdisplayed)
+%                 color = cmap(floor(ROIsdisplayed(i)*63/length(obj.synSet(2).synROIskey))+1,:);
+%                 plot3(100,100,-182+i*10,'o','MarkerSize',6,'MarkerEdgeColor',color,'MarkerFaceColor',color);
+%                 text(100,100,-182+i*10,strcat('...', obj.synSet(2).synROIskey(ROIsdisplayed(i))));
+%             end
             saveas(gcf,strcat(num2str(obj.synSet(1).rawData.upstream_bodyId(1)),'.png'),'png');
         end
         
@@ -1245,7 +1296,7 @@ classdef neurSkel
             
         end
         
-        function result = weightedSumBetweenSynSets(obj, decayFactor, distMatrix, synSetIndices, ROIs)
+        function result = weightedSumBetweenSynSets(obj, decayFactor, distMatrix, synSetIndices, ROIs, varargin)
             % distMatrix is KCtoAPLdisttoAPLtoKC
             % synSetIndices: dim 1 is the synSet for dim 1 of distMatrix,
             % and likewise for dim 2
@@ -1253,7 +1304,14 @@ classdef neurSkel
             % (APLtoKC synapses) this should be dim 2 of distMatrix (synSet
             % 1)
             % columns of output correspond to dim 2 of distMatrix
-             
+            
+            if nargin>5
+                calyxHACK=varargin{1};
+            else
+                calyxHACK=false;
+            end
+
+            
             is = synSetIndices;
             
             ROItags = cell(length(ROIs),1);
@@ -1285,6 +1343,18 @@ classdef neurSkel
                     % only apply ROI filter to dim 2 of distMatrix
                     origSynLocs = (obj.synSet(is(2)).uniquePartnerIndices==i); % find original synapses with partner i
                     synLocs2 = obj.synSet(is(2)).synLocsOfOrigSyn(origSynLocs); % find the uniqueSynapses of these original synapses
+                    if calyxHACK
+                        % This is a terrible hack for isolating the calyx!
+                        % necessary because not all calyx synapses are
+                        % tagged CA(R)
+                        % Many non-CA(R) synapses are actually in
+                        % the calyx, but some are not (some are in the peduncle, 
+                        % some are in the lobes. So to include the
+                        % non-CA(R) synapses and exclue the non-calyx
+                        % synapses, throw away all synapses whose x value
+                        % is > 160 um
+                        synLocs2 = synLocs2((obj.synSet(is(2)).synLocs(synLocs2,2)<(160/.008)));
+                    end
                     % reason for indexing here and not in the nested for loop
                     % is that Matlab is slow at extracting rows in a very large
                     % matrix. So we extract a few columns here to send to the
