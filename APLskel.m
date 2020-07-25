@@ -266,7 +266,58 @@ classdef APLskel < neurSkel
             set(0,'DefaultFigureVisible','on');
             
         end
-        
+        function [resultAllreordered, totalPerm] = reorderKCsv11(obj,result)
+            % operates on a numKCs x numKCs matrix called result
+            % returns:
+            % resultAllreordered: every square matrix is grouped by KC
+            % subtype and each subtype is further grouped by hierarchical
+            % clustering
+            % totalPerm
+            
+            allNeurons = readtable('traced-neurons-v1.1.csv');
+            KCsubtypes = {
+                'KCg-m_R';
+                'KCg-t_R';
+                'KCg-d_R';
+                'KCab-p_R';
+                'KCab-s_R';
+                'KCab-m_R';
+                'KCab-c_R';
+                'KCa''b''-ap1_R';
+                'KCa''b''-ap2_R';
+                'KCa''b''-m_R';
+                };
+            numTypes = length(KCsubtypes);
+            KCsubtypeIndices = cell(numTypes,1);
+            for i=1:numTypes
+                %     KCsubtypes{i}
+                [~,KCsubtypeIndices{i},~] = intersect(obj.synSet(1).uniquePartners, ...
+                    allNeurons{strcmp(allNeurons{:,'instance'},KCsubtypes{i}),'bodyId'});
+                %      length(KCsubtypeIndices{i})
+                
+            end
+            
+            % suppress automatic figure generation by dendrogram
+            set(0,'DefaultFigureVisible','off');
+            
+            totalPerm = [];
+            for i=1:numTypes
+                
+                resultThisType = result(KCsubtypeIndices{i},KCsubtypeIndices{i});
+                     size(resultThisType)
+                i
+                z = linkage(resultThisType);
+                h = figure;
+                [~,~,perm] = dendrogram(z,length(KCsubtypeIndices{i}));
+                %resultThisTypeReordered = resultThisType(perm,perm);
+                totalPerm = [totalPerm; KCsubtypeIndices{i}(perm)];
+                %figure,imagesc(resultThisTypeReordered);
+                %     size(resultThisTypeReordered)
+            end
+            resultAllreordered = result(totalPerm,totalPerm);
+            set(0,'DefaultFigureVisible','on');
+            
+        end        
         
     end
     
