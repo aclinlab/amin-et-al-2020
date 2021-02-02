@@ -1,8 +1,6 @@
 # Amin et al., 2020
- Code used in Amin et al. 2020 to measure distances between synapses along neurite skeletons
+ Code used in [Amin et al. 2020](https://elifesciences.org/articles/56954) to measure distances between synapses along neurite skeletons
  
- See pre-print at: [https://www.biorxiv.org/content/10.1101/2020.03.26.008300v1](https://www.biorxiv.org/content/10.1101/2020.03.26.008300v1)
-
 ### Fetching data from hemibrain server
 
 1. Install neuprint-python from:
